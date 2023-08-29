@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Entry</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <p>Hello, {{ user.username }}</p>
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h1>Dashboard</h1>
+            <ul>
+                <li><a href="{% url 'dashboard' %}">Home</a></li>
+                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
+                <!-- Add other dashboard links as needed -->
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <h1>Add Entry</h1>
+            <div class="add-entry-form">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <label for="{{ form.name.id_for_label }}">Name:</label>
+                    <input type="text" id="{{ form.name.id_for_label }}" name="{{ form.name.name }}">
+                    
+                    <label for="{{ form.employee_number.id_for_label }}">Employee Number:</label>
+                    <input type="text" id="{{ form.employee_number.id_for_label }}" name="{{ form.employee_number.name }}">
+                    
+                    <label for="{{ form.designation.id_for_label }}">Designation:</label>
+                    <input type="text" id="{{ form.designation.id_for_label }}" name="{{ form.designation.name }}">
+                    
+                    <label for="{{ form.last_pme_date.id_for_label }}">Last PME Date:</label>
+                    <input type="date" id="{{ form.last_pme_date.id_for_label }}" name="{{ form.last_pme_date.name }}">
+                    
+                    <label for="{{ form.last_visit_date.id_for_label }}">Last Visit Date:</label>
+                    <input type="date" id="{{ form.last_visit_date.id_for_label }}" name="{{ form.last_visit_date.name }}">
+                    
+                    <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label>
+                    <input type="date" id="{{ form.date_of_birth.id_for_label }}" name="{{ form.date_of_birth.name }}">
+
+                    <button type="submit">Add Entry</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
