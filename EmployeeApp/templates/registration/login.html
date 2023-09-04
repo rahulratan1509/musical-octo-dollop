@@ -2,9 +2,8 @@
 <html>
 <head>
     <title>Login</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/script.js"></script>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/login.css"> <!-- Include your login-specific CSS file here -->
 </head>
 <body>
   <div class="login-container">
@@ -12,9 +11,15 @@
       <h1>Welcome to Data Management</h1>
       <form method="post">
         {% csrf_token %}
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Log In</button>
+        <div class="form-group">
+          <input type="text" name="username" placeholder="Username" required>
+        </div>
+        <div class="form-group">
+          <input type="password" name="password" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn-primary">Log In</button>
+        </div>
       </form>
     </div>
   </div>

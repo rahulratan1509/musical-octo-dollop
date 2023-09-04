@@ -19,15 +19,23 @@
                 {% csrf_token %}
                 {{ form.as_p }}
 
-                <select id="branch-dropdown" name="branch">
-                    <option value="">Select Branch</option>
-                    <!-- Populate branch options here using JavaScript -->
-                </select>
+                <div class="dropdowns">
+                    <div class="form-group">
+                        <label for="branch">Branch:</label>
+                        <select id="branch-dropdown" name="branch">
+                            <option value="">Select Branch</option>
+                            <!-- Populate branch options here using JavaScript -->
+                        </select>
+                    </div>
 
-                <select id="area-dropdown" name="area">
-                    <option value="">Select Area</option>
-                    <!-- Populate area options here using JavaScript -->
-                </select>
+                    <div class="form-group">
+                        <label for="area">Area:</label>
+                        <select id="area-dropdown" name="area">
+                            <option value="">Select Area</option>
+                            <!-- Populate area options here using JavaScript -->
+                        </select>
+                    </div>
+                </div>
 
                 <!-- Add other dropdowns as needed -->
 

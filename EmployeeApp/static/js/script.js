@@ -18,10 +18,10 @@ $(document).ready(function() {
 
     // Populate branch dropdown
     branches.forEach(function(branch) {
-        branchDropdown.append($('<option>', {
+        $('<option>', {
             value: branch.id,
             text: branch.name
-        }));
+        }).appendTo(branchDropdown);
     });
 
     // Update area dropdown based on selected branch
@@ -34,11 +34,21 @@ $(document).ready(function() {
 
         areas.forEach(function(area) {
             if (area.branchId == selectedBranchId) {
-                areaDropdown.append($('<option>', {
+                $('<option>', {
                     value: area.name,
                     text: area.name
-                }));
+                }).appendTo(areaDropdown);
             }
         });
+    });
+
+    // Password toggle functionality
+    $('#password-toggle').on('change', function() {
+        var passwordInput = $('#id_password');
+        if (this.checked) {
+            passwordInput.attr('type', 'text');
+        } else {
+            passwordInput.attr('type', 'password');
+        }
     });
 });
