@@ -27,27 +27,51 @@
             <table>
                 <thead>
                     <tr>
+                        <th>Serial No</th> <!-- Serial number column -->
                         <th>Name</th>
                         <th>Employee Number</th>
                         <th>Designation</th>
-                        <th>Last Visit Date</th>
+                        <th>Last VT Date</th>
                         <th>Last PME Date</th>
                         <th>Date of Birth</th>
+                        <th>Next VT Date</th>
+                        <th>Next PME Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for record in records %}
                         <tr>
+                            <td>{{ forloop.counter }}</td> <!-- Serial number -->
                             <td>{{ record.name }}</td>
                             <td>{{ record.employee_number }}</td>
                             <td>{{ record.designation }}</td>
-                            <td>{{ record.last_visit_date }}</td>
+                            <td>{{ record.last_vt_date }}</td>
                             <td>{{ record.last_pme_date }}</td>
                             <td>{{ record.date_of_birth }}</td>
+                            <td>{{ record.next_vt_date|default:'' }}</td>
+                            <td>{{ record.next_pme_date|default:'' }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    
+         <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current-page">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
         </div>
     </div>
 </body>
