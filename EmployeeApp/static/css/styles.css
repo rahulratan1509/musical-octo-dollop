@@ -157,11 +157,12 @@ table th {
 
 /* login.css */
 
+/* Center the login box */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f4f4f4;
 }
 
@@ -203,6 +204,25 @@ table th {
 
 .btn-primary:hover {
     background-color: #0056b3;
+}
+
+/* Style the "Remember Me" checkbox */
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.signup-link {
+    font-size: 14px;
+}
+
+.signup-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
 }
 /* registration.css */
 
