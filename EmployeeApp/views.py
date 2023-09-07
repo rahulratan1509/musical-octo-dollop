@@ -25,10 +25,20 @@ def registration(request):
         form = UserCreationForm()
     return render(request, 'EmployeeApp/registration.html', {'form': form})
 
-@login_required
+from django.db.models import Q
+
 def dashboard(request):
     user = request.user
-    records = Entry.objects.filter(user=user)  # Only get records associated with the logged-in user
+    records = Entry.objects.filter(user=user).order_by('name')
+
+    # Handle search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        records = records.filter(
+            Q(name__icontains=search_query) |
+            Q(employee_number__icontains=search_query) |
+            Q(designation__icontains=search_query)
+        )
 
     # Configure pagination
     paginator = Paginator(records, 10)  # Display 10 records per page

@@ -24,6 +24,13 @@
 
         <div class="main-content">
             <h1>Employee Records</h1>
+                    <form method="get" action="{% url 'dashboard' %}">
+                            <div class="search-box">
+                                <input type="text" name="search" placeholder="Search...">
+                                <button type="submit">Search</button>
+                            </div>
+                    </form>
+
             <table>
                 <thead>
                     <tr>
