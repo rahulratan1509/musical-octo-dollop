@@ -27,8 +27,8 @@ class Entry(models.Model):
     name = models.CharField(max_length=100)
     employee_number = models.CharField(max_length=10)
     designation = models.CharField(max_length=50)
-    last_vt_date = models.DateField(verbose_name='Last VT Date')
-    last_pme_date = models.DateField()
+    last_vt_date = models.DateField(verbose_name='Last VT Date', null=True, blank=True)  # Make it optional
+    last_pme_date = models.DateField(null=True, blank=True)  # Make it optional
     date_of_birth = models.DateField()
     next_vt_date = models.DateField(null=True, blank=True)
     next_pme_date = models.DateField(null=True, blank=True)
