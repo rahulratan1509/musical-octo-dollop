@@ -131,3 +131,36 @@ def calculate_next_dates(dob, last_pme_date, last_vt_date):
 
     return next_vt_date, next_pme_date
 
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Entry
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Entry
+
+def delete_entry(request, entry_id):
+    entry = get_object_or_404(Entry, pk=entry_id)
+    if request.method == 'POST':
+        entry.delete()
+        return redirect('dashboard')
+    return render(request, 'EmployeeApp/delete_entry.html', {'entry': entry})
+
+
+from django.shortcuts import render, redirect
+from .models import Entry
+from .forms import EntryForm
+
+def edit_entry(request, entry_id):
+    entry = Entry.objects.get(pk=entry_id)
+    if request.method == 'POST':
+        form = EntryForm(request.POST, instance=entry)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = EntryForm(instance=entry)
+    return render(request, 'EmployeeApp/edit_entry.html', {'form': form, 'entry': entry})
+
+
+
+
+

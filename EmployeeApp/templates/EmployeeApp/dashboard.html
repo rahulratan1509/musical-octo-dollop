@@ -3,6 +3,7 @@
 <head>
     <title>Dashboard</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/delete_dialog.js"></script>
 </head>
 <body>
     <div class="header">
@@ -30,6 +31,8 @@
                                 <button type="submit">Search</button>
                             </div>
                     </form>
+                   
+
 
             <table>
                 <thead>
@@ -43,6 +46,7 @@
                         <th>Date of Birth</th>
                         <th>Next VT Date</th>
                         <th>Next PME Date</th>
+                        <th colspan="2">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,6 +61,16 @@
                             <td>{{ record.date_of_birth }}</td>
                             <td>{{ record.next_vt_date|default:'' }}</td>
                             <td>{{ record.next_pme_date|default:'' }}</td>
+                            <!-- Add this inside the table for each record -->
+                            <td><a href="#" class="delete-link" data-entry-id="{{ record.id }}">Delete</a></td>
+                            <form method="post" action="{% url 'delete_entry' record.id %}" data-entry-id="{{ record.id }}" style="display: none;">
+                                    {% csrf_token %}
+                            </form>
+                            <td><a href="{% url 'edit_entry' record.id %}">Edit</a></td>
+
+
+
+
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -81,5 +95,18 @@
             </span>
         </div>
     </div>
+            <script>
+                function toggleEdit(entryId) {
+                    const entryRow = document.getElementById(`entry-${entryId}`);
+                    entryRow.querySelectorAll('td[data-editable="true"]').forEach(cell => {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = cell.textContent.trim();
+                        cell.textContent = '';
+                        cell.appendChild(input);
+                    });
+                }
+            </script>
+
 </body>
 </html>

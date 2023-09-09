@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Entry Confirmation</title>
+</head>
+<body>
+    <h1>Delete Entry Confirmation</h1>
+    <p>Are you sure you want to delete the entry for {{ entry.name }}?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+        <a href="{% url 'dashboard' %}">Cancel</a>
+    </form>
+</body>
+</html>

@@ -10,4 +10,6 @@ urlpatterns = [
     path('add_entry/', views.add_entry, name='add_entry'),
     path('ajax/load-areas/', views.load_areas, name='ajax_load_areas'),
     path('register/', views.registration, name='registration'),
+    path('delete_entry/<int:entry_id>/', views.delete_entry, name='delete_entry'),
+    path('edit_entry/<int:entry_id>/', views.edit_entry, name='edit_entry'),
 ]
