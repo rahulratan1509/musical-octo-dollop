@@ -205,3 +205,18 @@ def delete_entry(request, entry_id):
         entry.delete()
         return redirect('dashboard')
     return render(request, 'EmployeeApp/delete_entry.html', {'entry': entry})
+from django.contrib import messages
+from django.shortcuts import redirect
+
+@login_required
+def flush_entries(request):
+    user = request.user
+
+    # Delete all entries associated with the user
+    Entry.objects.filter(user=user).delete()
+
+    # Optionally, you can add a success message
+    messages.success(request, 'All entries have been deleted.')
+
+    return redirect('dashboard')
+

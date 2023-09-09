@@ -135,7 +135,7 @@ table th {
     text-decoration: none;
     margin: 0 5px;
     transition: background-color 0.3s, color 0.3s;
-    display: inline-block; /* Display links inline */
+    display: block; /* Display links as blocks for vertical layout */
 }
 
 .page-links a:hover {
@@ -155,40 +155,24 @@ table th {
     }
 }
 
-/* Danger Button */
-.danger-button {
-    background-color: red !important;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
+/* login.css */
 
-/* Primary Button */
-button[type="submit"] {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    text-decoration: none;
-}
-
-button[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-.action-buttons {
+/* Center the login box */
+.login-container {
     display: flex;
-    gap: 10px; /* Adjust the gap as needed */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
 }
 
-.button-container {
-    margin-bottom: 20px; /* Adjust the margin as needed */
+.login-box {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: center;
 }
 
 .login-box h1 {
@@ -241,3 +225,86 @@ button[type="submit"]:hover {
     text-decoration: underline;
 }
 /* registration.css */
+
+/* register.css */
+
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* Container for Registration */
+.registration-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+}
+
+/* Registration Box */
+.registration-box {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    width: 80%; /* Adjust the width as needed */
+    text-align: center;
+    padding: 30px;
+    margin: 20px; /* Add some margin to center it better */
+}
+
+/* Title */
+.registration-box h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #007bff;
+}
+
+/* Form Group (Labels and Inputs) */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left; /* Align labels and inputs to the left */
+}
+
+.form-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #555; /* Dark gray text color for labels */
+}
+
+.form-group select,
+.form-group input {
+    padding: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Dropdown Container */
+.dropdowns {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Primary Button */
+button[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    text-decoration: none;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    color: #fff;
+}

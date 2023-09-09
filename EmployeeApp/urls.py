@@ -16,5 +16,6 @@ urlpatterns = [
     
     path('export_entries/', views.export_entries, name='export_entries'),
     path('import_entries/', views.import_entries, name='import_entries'),
+    path('flush_entries/', views.flush_entries, name='flush_entries'),
     
 ]

@@ -23,13 +23,15 @@
         </div>
 
         <div class="main-content">
-            <h1>Add Entry</h1>
-            <a href="{% url 'import_entries' %}" class="btn btn-primary">Import Entries</a>
+            <h1 style="margin-bottom: 20px;">Add Entry</h1>
+            <div style="margin-bottom: 20px;">
+                <a href="{% url 'import_entries' %}" class="btn btn-primary">Import Entries</a>
+            </div>
             <div class="add-entry-form">
                 <form method="post">
                     {% csrf_token %}
                     
-                    <label for="{{ form.name.id_for_label }}">Name:</label>
+                    <label for="{{ form.name.id_for_label }}" style="margin-bottom: 10px;">Name:</label> <!-- Added margin-bottom to the label -->
                     <input type="text" id="{{ form.name.id_for_label }}" name="{{ form.name.name }}">
                     
                     <label for="{{ form.employee_number.id_for_label }}">Employee Number:</label>

@@ -3,6 +3,7 @@
 <head>
     <title>Dashboard</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css"> <!-- Add a separate CSS file for dashboard styles -->
     <script src="/static/js/delete_dialog.js"></script>
 </head>
 <body>
@@ -31,10 +32,17 @@
                                 <button type="submit">Search</button>
                             </div>
                     </form>
-                    <form method="post" action="{% url 'export_entries' %}">
-                            {% csrf_token %}
-                            <button type="submit">Export to Excel</button>
-                    </form>
+                    <div class="action-buttons">
+                                    <form method="post" action="{% url 'export_entries' %}">
+                                        {% csrf_token %}
+                                        <button type="submit">Export to Excel</button>
+                                    </form>
+                                    <form method="post" action="{% url 'flush_entries' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="danger-button">Flush All Entries</button>
+                                    </form>
+                    </div>
+
                    
 
 
