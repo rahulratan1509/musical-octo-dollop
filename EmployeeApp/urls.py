@@ -12,4 +12,9 @@ urlpatterns = [
     path('register/', views.registration, name='registration'),
     path('delete_entry/<int:entry_id>/', views.delete_entry, name='delete_entry'),
     path('edit_entry/<int:entry_id>/', views.edit_entry, name='edit_entry'),
+    # ...
+    
+    path('export_entries/', views.export_entries, name='export_entries'),
+    path('import_entries/', views.import_entries, name='import_entries'),
+    
 ]

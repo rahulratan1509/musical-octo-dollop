@@ -1,12 +1,100 @@
+from datetime import datetime, timedelta
+import pandas as pd
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
-from django.http import JsonResponse
-from .models import Area, Entry
-from .forms import EntryForm
+from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-import datetime  # Import datetime module
+from django.utils.dateparse import parse_date
+from .models import Area, Entry
+from .forms import EntryForm, ImportEntriesForm
+
+def calculate_next_dates(dob, last_pme_date, last_vt_date):
+    current_year = datetime.now().year
+    dob_year = dob.year
+    age = current_year - dob_year
+    retirement_age = 60
+    next_vt_date = None
+    next_pme_date = None
+
+    if age < retirement_age:
+        if last_vt_date:
+            next_vt_date = last_vt_date + timedelta(days=5 * 365)  # VT every 5 years
+        else:
+            next_vt_date = dob + timedelta(days=365)  # VT after 1 year
+
+        if age <= 45 and last_pme_date:
+            next_pme_date = last_pme_date + timedelta(days=5 * 365)  # PME every 5 years
+        elif last_pme_date:
+            next_pme_date = last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
+
+        if age + 1 == 59 and current_year == 2023:
+            next_vt_date = datetime(2023, 6, 15).date()  # Set VT and PME dates for 2023 (adjust as needed)
+            next_pme_date = datetime(2023, 8, 25).date()
+
+        if age == 59 and current_year == 2024:
+            next_vt_date = datetime(2024, 7, 10).date()  # Set VT and PME dates for 2024 (adjust as needed)
+            next_pme_date = datetime(2024, 9, 20).date()
+
+    return next_vt_date, next_pme_date
+
+@login_required
+def edit_entry(request, entry_id):
+    entry = get_object_or_404(Entry, pk=entry_id)
+    if request.method == 'POST':
+        form = EntryForm(request.POST, instance=entry)
+        if form.is_valid():
+            entry = form.save(commit=False)
+
+            next_vt_date, next_pme_date = calculate_next_dates(
+                entry.date_of_birth,
+                entry.last_pme_date,
+                entry.last_vt_date
+            )
+
+            entry.last_vt_date = next_vt_date if not entry.last_vt_date else entry.last_vt_date
+            entry.last_pme_date = next_pme_date if not entry.last_pme_date else entry.last_pme_date
+            entry.next_vt_date = next_vt_date
+            entry.next_pme_date = next_pme_date
+
+            entry.save()
+            return redirect('dashboard')
+    else:
+        form = EntryForm(instance=entry)
+    
+    return render(request, 'EmployeeApp/edit_entry.html', {'form': form, 'entry': entry})
+
+@login_required
+def add_entry(request):
+    if request.method == 'POST':
+        form = EntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.user = request.user
+
+            next_vt_date, next_pme_date = calculate_next_dates(
+                entry.date_of_birth,
+                entry.last_pme_date,
+                entry.last_vt_date
+            )
+
+            entry.last_vt_date = next_pme_date if not entry.last_vt_date else entry.last_vt_date
+            entry.last_pme_date = next_vt_date if not entry.last_pme_date else entry.last_pme_date
+            entry.next_vt_date = next_vt_date
+            entry.next_pme_date = next_pme_date
+
+            entry.save()
+
+            return redirect('dashboard')
+        else:
+            print("Form is not valid. Errors:")
+            print(form.errors)
+    else:
+        form = EntryForm()
+
+    return render(request, 'EmployeeApp/add_entry.html', {'form': form})
 
 def load_areas(request):
     branch_id = request.GET.get('branch')
@@ -18,20 +106,16 @@ def registration(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Log the user in
             login(request, user)
             return redirect('dashboard')
     else:
         form = UserCreationForm()
     return render(request, 'EmployeeApp/registration.html', {'form': form})
 
-from django.db.models import Q
-
 def dashboard(request):
     user = request.user
     records = Entry.objects.filter(user=user).order_by('name')
 
-    # Handle search functionality
     search_query = request.GET.get('search')
     if search_query:
         records = records.filter(
@@ -40,102 +124,80 @@ def dashboard(request):
             Q(designation__icontains=search_query)
         )
 
-    # Configure pagination
-    paginator = Paginator(records, 10)  # Display 10 records per page
+    paginator = Paginator(records, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
     return render(request, 'EmployeeApp/dashboard.html', {'user': user, 'records': page_obj})
 
-@login_required
-def add_entry(request):
+def export_entries(request):
+    current_user = request.user
+    entries = Entry.objects.filter(user=current_user)
+
+    data = {
+        'Name': [entry.name for entry in entries],
+        'Employee Number': [entry.employee_number for entry in entries],
+        'Designation': [entry.designation for entry in entries],
+    }
+
+    df = pd.DataFrame(data)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=employee_entries.xlsx'
+
+    df.to_excel(response, index=False)
+
+    return response
+
+def import_entries(request):
     if request.method == 'POST':
-        form = EntryForm(request.POST)
+        form = ImportEntriesForm(request.POST, request.FILES)
         if form.is_valid():
-            entry = form.save(commit=False)  # Create an entry instance but don't save it yet
+            file = request.FILES['file']
+            if file.name.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file)
 
-            entry.user = request.user  # Associate the entry with the logged-in user
+                for _, row in df.iterrows():
+                    date_of_birth = row.get('Date of Birth')
+                    last_vt_date_str = row.get('Last VT Date')
+                    last_pme_date_str = row.get('Last PME Date')
 
-            # Calculate next PME and VT dates
-            next_vt_date, next_pme_date = calculate_next_dates(
-                entry.date_of_birth,
-                entry.last_pme_date,
-                entry.last_vt_date
-            )
+                    if not pd.isna(date_of_birth):
+                        date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+                    else:
+                        date_of_birth = None
 
-            # Check if last_vt_date is blank and use the value from last_pme_date if available
-            if not entry.last_vt_date and next_pme_date:
-                entry.last_vt_date = next_pme_date
+                    if last_vt_date_str:
+                        last_vt_date = datetime.strptime(last_vt_date_str, '%Y-%m-%d').date()
+                    else:
+                        last_vt_date = None
 
-            # Check if last_pme_date is blank and use the value from last_vt_date if available
-            if not entry.last_pme_date and next_vt_date:
-                entry.last_pme_date = next_vt_date
+                    if last_pme_date_str:
+                        last_pme_date = datetime.strptime(last_pme_date_str, '%Y-%m-%d').date()
+                    else:
+                        last_pme_date = None
 
-            entry.next_vt_date = next_vt_date
-            entry.next_pme_date = next_pme_date
+                    next_vt_date, next_pme_date = calculate_next_dates(date_of_birth, last_pme_date, last_vt_date)
 
-            entry.save()  # Now save the entry
+                    Entry.objects.create(
+                        user=request.user,
+                        name=row['Name'],
+                        employee_number=row['Employee Number'],
+                        date_of_birth=date_of_birth,
+                        last_vt_date=last_vt_date,
+                        last_pme_date=last_pme_date,
+                        next_vt_date=next_vt_date,
+                        next_pme_date=next_pme_date,
+                        designation=row['Designation'],
+                    )
 
-            # Debugging messages
-            print("Entry saved successfully.")
-            print(f"next_vt_date: {next_vt_date}")
-            print(f"next_pme_date: {next_pme_date}")
-
-            return redirect('dashboard')  # Redirect to the dashboard page
-        else:
-            # Debugging message for form validation errors
-            print("Form is not valid. Errors:")
-            print(form.errors)
+                return redirect('dashboard')
+            else:
+                form.add_error('file', 'Invalid file format. Please upload an Excel file.')
     else:
-        form = EntryForm()
+        form = ImportEntriesForm()
 
-    return render(request, 'EmployeeApp/add_entry.html', {'form': form})
-
-
-def calculate_next_dates(dob, last_pme_date, last_vt_date):
-    current_year = datetime.datetime.now().year
-    dob_year = dob.year
-
-    age = current_year - dob_year
-    retirement_age = 60
-    next_vt_date = None
-    next_pme_date = None
-
-    if age < retirement_age:
-        if last_vt_date:
-            next_vt_date = last_vt_date + datetime.timedelta(days=5 * 365)  # VT every 5 years
-        else:
-            next_vt_date = dob + datetime.timedelta(days=365)  # VT after 1 year
-
-        if age <= 45 and last_pme_date:
-            next_pme_date = last_pme_date + datetime.timedelta(days=5 * 365)  # PME every 5 years
-        elif last_pme_date:
-            next_pme_date = last_pme_date + datetime.timedelta(days=3 * 365)  # PME every 3 years
-        elif not last_pme_date:  # Handle the case where last_pme_date is not provided
-            next_pme_date = None  # Set to None if not provided
-
-        # Handle the case where last_vt_date is not provided
-        if not last_vt_date:
-            next_vt_date = None  # Set to None if not provided
-
-        # Check if the person will turn 59 in the next year (2024)
-        if age + 1 == 59 and current_year == 2023:
-            # Set VT and PME dates for 2023 (random date and month)
-            next_vt_date = datetime.date(2023, 6, 15)  # Change to your preferred date
-            next_pme_date = datetime.date(2023, 8, 25)  # Change to your preferred date
-
-        # Check if the person is 59 years old and it's 2024
-        if age == 59 and current_year == 2024:
-            # Set VT and PME dates for 2024 (random date and month)
-            next_vt_date = datetime.date(2024, 7, 10)  # Change to your preferred date
-            next_pme_date = datetime.date(2024, 9, 20)  # Change to your preferred date
-
-    return next_vt_date, next_pme_date
-
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Entry
-
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Entry
+    return render(request, 'EmployeeApp/import_entries.html', {'form': form})
 
 def delete_entry(request, entry_id):
     entry = get_object_or_404(Entry, pk=entry_id)
@@ -143,24 +205,3 @@ def delete_entry(request, entry_id):
         entry.delete()
         return redirect('dashboard')
     return render(request, 'EmployeeApp/delete_entry.html', {'entry': entry})
-
-
-from django.shortcuts import render, redirect
-from .models import Entry
-from .forms import EntryForm
-
-def edit_entry(request, entry_id):
-    entry = Entry.objects.get(pk=entry_id)
-    if request.method == 'POST':
-        form = EntryForm(request.POST, instance=entry)
-        if form.is_valid():
-            form.save()
-            return redirect('dashboard')
-    else:
-        form = EntryForm(instance=entry)
-    return render(request, 'EmployeeApp/edit_entry.html', {'form': form, 'entry': entry})
-
-
-
-
-

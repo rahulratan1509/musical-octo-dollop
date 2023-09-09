@@ -24,6 +24,7 @@
 
         <div class="main-content">
             <h1>Add Entry</h1>
+            <a href="{% url 'import_entries' %}" class="btn btn-primary">Import Entries</a>
             <div class="add-entry-form">
                 <form method="post">
                     {% csrf_token %}

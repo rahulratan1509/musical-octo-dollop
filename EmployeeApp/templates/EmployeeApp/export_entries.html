@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Export Entries</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <p>Hello, {{ user.username }}</p>
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <div class="export-container">
+        <h1>Export Employee Entries</h1>
+        <form method="post" action="{% url 'export_entries' %}">
+            {% csrf_token %}
+            <button type="submit">Export to Excel</button>
+        </form>
+    </div>
+</body>
+</html>
