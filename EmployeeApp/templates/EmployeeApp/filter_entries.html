@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Filter Entries</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <p>Hello, {{ user.username }}</p>
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h1>Dashboard</h1>
+            <ul class="dashboard-menu">
+                <li><a href="{% url 'dashboard' %}">Home</a></li>
+                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
+                <li><a href="{% url 'filter_entries' %}">Filter Entries</a></li> <!-- Added Filter Entries link -->
+                <!-- Add other dashboard links as needed -->
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <h1>Filter Entries</h1>
+            <form method="post">
+                {% csrf_token %}
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" required>
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" required>
+                <button type="submit">Filter</button>
+            </form>
+
+            <!-- Display selected date range -->
+            {% if start_date and end_date %}
+            <p>Selected Date Range: {{ start_date }} to {{ end_date }}</p>
+            {% endif %}
+            
+            <h2>Upcoming VT and PME Dates</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Employee Number</th>
+                        <th>Designation</th>
+                        
+                        <th>Next VT Date</th>
+                        <th>Next PME Date</th>
+                        <th>Age</th> <!-- Added Age column -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.name }}</td>
+                        <td>{{ entry.employee_number }}</td>
+                        <td>{{ entry.designation }}</td>
+                        <td>{{ entry.next_vt_date }}</td>
+                        <td>{{ entry.next_pme_date }}</td>
+                        <td>{{ entry.age }}</td> <!-- Display age -->
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No entries found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,9 +15,10 @@
     <div class="dashboard-container">
         <div class="sidebar">
             <h1>Dashboard</h1>
-            <ul>
+            <ul class="dashboard-menu">
                 <li><a href="{% url 'dashboard' %}">Home</a></li>
                 <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
+                <li><a href="{% url 'filter_entries' %}">Filter Entries</a></li> <!-- Added Filter Entries link -->
                 <!-- Add other dashboard links as needed -->
             </ul>
         </div>

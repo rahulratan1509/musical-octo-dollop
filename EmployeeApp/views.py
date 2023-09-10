@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pandas as pd
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -10,6 +10,13 @@ from django.core.paginator import Paginator
 from django.utils.dateparse import parse_date
 from .models import Area, Entry
 from .forms import EntryForm, ImportEntriesForm
+from django.contrib import messages
+
+# Utility Functions
+def calculate_age(date_of_birth):
+    today = date.today()
+    age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+    return age
 
 def calculate_next_dates(dob, last_pme_date, last_vt_date):
     current_year = datetime.now().year
@@ -40,6 +47,8 @@ def calculate_next_dates(dob, last_pme_date, last_vt_date):
 
     return next_vt_date, next_pme_date
 
+# Views
+
 @login_required
 def edit_entry(request, entry_id):
     entry = get_object_or_404(Entry, pk=entry_id)
@@ -63,7 +72,7 @@ def edit_entry(request, entry_id):
             return redirect('dashboard')
     else:
         form = EntryForm(instance=entry)
-    
+
     return render(request, 'EmployeeApp/edit_entry.html', {'form': form, 'entry': entry})
 
 @login_required
@@ -86,7 +95,6 @@ def add_entry(request):
             entry.next_pme_date = next_pme_date
 
             entry.save()
-
             return redirect('dashboard')
         else:
             print("Form is not valid. Errors:")
@@ -149,8 +157,6 @@ def export_entries(request):
 
     return response
 
-from django.http import JsonResponse
-
 def import_entries(request):
     if request.method == 'POST':
         form = ImportEntriesForm(request.POST, request.FILES)
@@ -197,12 +203,10 @@ def import_entries(request):
                         designation=row['Designation'],
                     )
 
-
                     # Increment the counter for entries created
                     num_entries_created += 1
 
                 # Return the number of entries created in the JSON response
-                
                 return redirect('dashboard')
             else:
                 form.add_error('file', 'Invalid file format. Please upload an Excel file.')
@@ -210,14 +214,13 @@ def import_entries(request):
         form = ImportEntriesForm()
 
     return render(request, 'EmployeeApp/import_entries.html', {'form': form})
+
 def delete_entry(request, entry_id):
     entry = get_object_or_404(Entry, pk=entry_id)
     if request.method == 'POST':
         entry.delete()
         return redirect('dashboard')
     return render(request, 'EmployeeApp/delete_entry.html', {'entry': entry})
-from django.contrib import messages
-from django.shortcuts import redirect
 
 @login_required
 def flush_entries(request):
@@ -231,3 +234,24 @@ def flush_entries(request):
 
     return redirect('dashboard')
 
+def filter_entries(request):
+    user = request.user  # Get the current user
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+
+    if start_date and end_date:
+        # Convert start_date and end_date to date objects
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        # Filter entries by the current user and date range
+        entries = Entry.objects.filter(user=user, next_vt_date__range=(start_date, end_date))
+
+        # Calculate age for each entry
+        for entry in entries:
+            entry.age = calculate_age(entry.date_of_birth)
+    else:
+        # If no date range is selected, set entries to None
+        entries = None
+
+    return render(request, 'EmployeeApp/filter_entries.html', {'entries': entries, 'start_date': start_date, 'end_date': end_date})
