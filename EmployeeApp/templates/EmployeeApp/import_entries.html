@@ -1,20 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Import Entries</title>
-    <!-- Add your CSS and other styling here -->
+    <title>Add Entry</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>Import Entries</h1>
+    <div class="header">
+        <div class="user-info">
+            <p>Hello, {{ user.username }}</p>
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h1>Dashboard</h1>
+            <ul>
+                <li><a href="{% url 'dashboard' %}">Home</a></li>
+                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
+                <!-- Add other dashboard links as needed -->
+            </ul>
+        </div>
+
+        <div class="main-content">
+                <h1>Import Entries</h1>
     
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        {{ form.as_p }}
-        
-        <button type="submit">Upload</button>
-    </form>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {{ form.as_p }}
+                    
+                    <button type="submit">Upload</button>
+                </form>
     
-    <!-- Add any additional content or styling here -->
+
+        </div>
+    </div>
 </body>
 </html>

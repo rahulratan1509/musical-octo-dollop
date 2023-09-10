@@ -1,0 +1,36 @@
+/* import_entries.css */
+
+/* Center the form and progress bar */
+#import-form {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Style the progress bar */
+.progress {
+    height: 20px;
+}
+
+.progress-bar {
+    background-color: #007bff;
+}
+
+/* Style the status message */
+#status-message {
+    margin-top: 20px;
+}
+
+/* Style the submit button */
+button[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}

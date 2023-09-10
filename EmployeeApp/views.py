@@ -149,6 +149,8 @@ def export_entries(request):
 
     return response
 
+from django.http import JsonResponse
+
 def import_entries(request):
     if request.method == 'POST':
         form = ImportEntriesForm(request.POST, request.FILES)
@@ -156,6 +158,9 @@ def import_entries(request):
             file = request.FILES['file']
             if file.name.endswith(('.xlsx', '.xls')):
                 df = pd.read_excel(file)
+
+                # Initialize the counter for entries created
+                num_entries_created = 0
 
                 for _, row in df.iterrows():
                     date_of_birth = row.get('Date of Birth')
@@ -179,6 +184,7 @@ def import_entries(request):
 
                     next_vt_date, next_pme_date = calculate_next_dates(date_of_birth, last_pme_date, last_vt_date)
 
+                    # Create the entry
                     Entry.objects.create(
                         user=request.user,
                         name=row['Name'],
@@ -191,6 +197,12 @@ def import_entries(request):
                         designation=row['Designation'],
                     )
 
+
+                    # Increment the counter for entries created
+                    num_entries_created += 1
+
+                # Return the number of entries created in the JSON response
+                
                 return redirect('dashboard')
             else:
                 form.add_error('file', 'Invalid file format. Please upload an Excel file.')
@@ -198,7 +210,6 @@ def import_entries(request):
         form = ImportEntriesForm()
 
     return render(request, 'EmployeeApp/import_entries.html', {'form': form})
-
 def delete_entry(request, entry_id):
     entry = get_object_or_404(Entry, pk=entry_id)
     if request.method == 'POST':
