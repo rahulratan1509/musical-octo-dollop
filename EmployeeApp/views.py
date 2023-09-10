@@ -146,6 +146,11 @@ def export_entries(request):
         'Name': [entry.name for entry in entries],
         'Employee Number': [entry.employee_number for entry in entries],
         'Designation': [entry.designation for entry in entries],
+        'Last VT Date': [entry.last_vt_date.strftime('%Y-%m-%d') if entry.last_vt_date else '' for entry in entries],
+        'Last PME Date': [entry.last_pme_date.strftime('%Y-%m-%d') if entry.last_pme_date else '' for entry in entries],
+        'Next VT Date': [entry.next_vt_date.strftime('%Y-%m-%d') if entry.next_vt_date else '' for entry in entries],
+        'Next PME Date': [entry.next_pme_date.strftime('%Y-%m-%d') if entry.next_pme_date else '' for entry in entries],
+        'Date of Birth': [entry.date_of_birth.strftime('%Y-%m-%d') if entry.date_of_birth else '' for entry in entries],
     }
 
     df = pd.DataFrame(data)
