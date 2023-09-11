@@ -162,6 +162,11 @@ def export_entries(request):
 
     return response
 
+from datetime import datetime
+import pandas as pd
+
+# ...
+
 def import_entries(request):
     if request.method == 'POST':
         form = ImportEntriesForm(request.POST, request.FILES)
@@ -174,21 +179,28 @@ def import_entries(request):
                 num_entries_created = 0
 
                 for _, row in df.iterrows():
-                    date_of_birth = row.get('Date of Birth')
-                    last_vt_date_str = row.get('Last VT Date')
-                    last_pme_date_str = row.get('Last PME Date')
+                    dob_str = row['Date of Birth']
+                    last_vt_date_str = row['Last VT Date']
+                    last_pme_date_str = row['Last PME Date']
 
-                    if not pd.isna(date_of_birth):
-                        date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+                    print(f'dob_str: {dob_str}, last_vt_date_str: {last_vt_date_str}, last_pme_date_str: {last_pme_date_str}')
+
+                for _, row in df.iterrows():
+                    dob_str = row['Date of Birth']
+                    last_vt_date_str = row['Last VT Date']
+                    last_pme_date_str = row['Last PME Date']
+
+                    if not pd.isna(dob_str):
+                        date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date()
                     else:
                         date_of_birth = None
 
-                    if last_vt_date_str:
+                    if not pd.isna(last_vt_date_str):
                         last_vt_date = datetime.strptime(last_vt_date_str, '%Y-%m-%d').date()
                     else:
                         last_vt_date = None
 
-                    if last_pme_date_str:
+                    if not pd.isna(last_pme_date_str):
                         last_pme_date = datetime.strptime(last_pme_date_str, '%Y-%m-%d').date()
                     else:
                         last_pme_date = None
