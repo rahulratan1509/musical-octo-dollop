@@ -167,6 +167,10 @@ import pandas as pd
 
 # ...
 
+from dateutil import parser as date_parser
+
+# ...
+@login_required
 def import_entries(request):
     if request.method == 'POST':
         form = ImportEntriesForm(request.POST, request.FILES)
@@ -183,27 +187,10 @@ def import_entries(request):
                     last_vt_date_str = row['Last VT Date']
                     last_pme_date_str = row['Last PME Date']
 
-                    print(f'dob_str: {dob_str}, last_vt_date_str: {last_vt_date_str}, last_pme_date_str: {last_pme_date_str}')
-
-                for _, row in df.iterrows():
-                    dob_str = row['Date of Birth']
-                    last_vt_date_str = row['Last VT Date']
-                    last_pme_date_str = row['Last PME Date']
-
-                    if not pd.isna(dob_str):
-                        date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date()
-                    else:
-                        date_of_birth = None
-
-                    if not pd.isna(last_vt_date_str):
-                        last_vt_date = datetime.strptime(last_vt_date_str, '%Y-%m-%d').date()
-                    else:
-                        last_vt_date = None
-
-                    if not pd.isna(last_pme_date_str):
-                        last_pme_date = datetime.strptime(last_pme_date_str, '%Y-%m-%d').date()
-                    else:
-                        last_pme_date = None
+                    # Parse dates using dateutil.parser.parse
+                    date_of_birth = None if pd.isna(dob_str) else date_parser.parse(str(dob_str)).date()
+                    last_vt_date = None if pd.isna(last_vt_date_str) else date_parser.parse(str(last_vt_date_str)).date()
+                    last_pme_date = None if pd.isna(last_pme_date_str) else date_parser.parse(str(last_pme_date_str)).date()
 
                     next_vt_date, next_pme_date = calculate_next_dates(date_of_birth, last_pme_date, last_vt_date)
 
@@ -231,6 +218,7 @@ def import_entries(request):
         form = ImportEntriesForm()
 
     return render(request, 'EmployeeApp/import_entries.html', {'form': form})
+
 
 def delete_entry(request, entry_id):
     entry = get_object_or_404(Entry, pk=entry_id)
