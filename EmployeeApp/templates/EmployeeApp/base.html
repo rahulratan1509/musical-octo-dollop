@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Your Title Here{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    {% block extra_css %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <div class="user-info right-align">
+                <p>Hello, {{ user.username }}</p>
+                <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h1>Dashboard</h1>
+            <ul class="dashboard-menu">
+                <li><a href="{% url 'dashboard' %}">Home</a></li>
+                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
+                <li><a href="{% url 'filter_entries' %}">Filter Entries</a></li>
+                <!-- Add other dashboard links as needed -->
+            </ul>
+        </div>
+
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

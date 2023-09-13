@@ -1,32 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css"> <!-- Add a separate CSS file for dashboard styles -->
+{% extends "EmployeeApp/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+    <!-- <link rel="stylesheet" href="/static/css/dashboard.css"> -->
+{% endblock %}
+{% block extra_js %}
     <script src="/static/js/delete_dialog.js"></script>
-</head>
-<body>
-    <div class="header">
-        <div class="user-info">
-            <p>Hello, {{ user.username }}</p>
-            <a href="{% url 'logout' %}">Logout</a>
-        </div>
-    </div>
+{% endblock %}
 
-    <div class="dashboard-container">
-        <div class="sidebar">
-            <h1>Dashboard</h1>
-            <ul class="dashboard-menu">
-                <li><a href="{% url 'dashboard' %}">Home</a></li>
-                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
-                <li><a href="{% url 'filter_entries' %}">Filter Entries</a></li> <!-- Added Filter Entries link -->
-                <!-- Add other dashboard links as needed -->
-            </ul>
-        </div>
-
-        <div class="main-content">
-            <h1>Employee Records</h1>
+{% block content %}
+    <!-- Your specific content for the "Dashboard" page goes here -->
+    <!-- ... The content you provided for the "Dashboard" page ... -->
+    <h1>Employee Records</h1>
                     <form method="get" action="{% url 'dashboard' %}">
                             <div class="search-box">
                                 <input type="text" name="search" placeholder="Search...">
@@ -109,18 +94,4 @@
     
 
     </div>
-            <script>
-                function toggleEdit(entryId) {
-                    const entryRow = document.getElementById(`entry-${entryId}`);
-                    entryRow.querySelectorAll('td[data-editable="true"]').forEach(cell => {
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.value = cell.textContent.trim();
-                        cell.textContent = '';
-                        cell.appendChild(input);
-                    });
-                }
-            </script>
-
-</body>
-</html>
+{% endblock %}

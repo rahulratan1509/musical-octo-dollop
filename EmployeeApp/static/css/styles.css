@@ -271,3 +271,57 @@ button[type="submit"]:hover {
     background-color: #555; /* Change background color on hover */
 }
 
+.right-align {
+    text-align: right;
+}
+/* Add these styles to align the login info to the left and the logout button to the right */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+}
+
+.user-info {
+    margin-left: 20px; /* Adjust the margin as needed */
+}
+
+.logout-button {
+    margin-right: 20px; /* Adjust the margin as needed */
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.step-links {
+    display: flex;
+    align-items: center;
+}
+
+.current-page {
+    margin: 0 20px;
+    font-weight: bold;
+}
+
+.page-link {
+    padding: 5px 10px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    color: #007bff;
+    text-decoration: none;
+    margin: 0 5px;
+    transition: background-color 0.3s, color 0.3s;
+    display: inline-block; /* Display links inline */
+}
+
+.page-link:hover {
+    background-color: #007bff;
+    color: #fff;
+}
