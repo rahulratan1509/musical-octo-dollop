@@ -2,96 +2,112 @@
 
 {% block title %}Dashboard{% endblock %}
 {% block extra_css %}
-    <!-- <link rel="stylesheet" href="/static/css/dashboard.css"> -->
+    <!-- Add custom CSS for color coding -->
+    <style>
+        /* Custom styling for Next VT Date and Next PME Date cells */
+        .yellow {
+            background-color: yellow;
+        }
+
+        .green {
+            background-color: green;
+            color: white;
+        }
+
+        .red {
+            background-color: red;
+            color: white;
+        }
+    </style>
 {% endblock %}
 {% block extra_js %}
     <script src="/static/js/delete_dialog.js"></script>
+    <script>
+        function confirmFlushEntries() {
+            if (confirm('Are you sure you want to flush all entries?')) {
+                // User confirmed, perform the flush operation
+                document.getElementById('flush-entries-form').submit();
+            } else {
+                // User canceled, do nothing
+            }
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
     <!-- Your specific content for the "Dashboard" page goes here -->
     <!-- ... The content you provided for the "Dashboard" page ... -->
     <h1>Employee Records</h1>
-                    <form method="get" action="{% url 'dashboard' %}">
-                            <div class="search-box">
-                                <input type="text" name="search" placeholder="Search...">
-                                <button type="submit">Search</button>
-                            </div>
-                    </form>
-                    <div class="action-buttons">
-                                    <form method="post" action="{% url 'export_entries' %}">
-                                        {% csrf_token %}
-                                        <button type="submit">Export to Excel</button>
-                                    </form>
-                                    <form method="post" action="{% url 'flush_entries' %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="danger-button">Flush All Entries</button>
-                                    </form>
-                    </div>
-
-                   
-
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Serial No</th> <!-- Serial number column -->
-                        <th>Name</th>
-                        <th>Employee Number</th>
-                        <th>Designation</th>
-                        <th>Last VT Date</th>
-                        <th>Last PME Date</th>
-                        <th>Date of Birth</th>
-                        <th>Next VT Date</th>
-                        <th>Next PME Date</th>
-                        <th colspan="2">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in records %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td> <!-- Serial number -->
-                            <td>{{ record.name }}</td>
-                            <td>{{ record.employee_number }}</td>
-                            <td>{{ record.designation }}</td>
-                            <td>{{ record.last_vt_date }}</td>
-                            <td>{{ record.last_pme_date }}</td>
-                            <td>{{ record.date_of_birth }}</td>
-                            <td>{{ record.next_vt_date|default:'' }}</td>
-                            <td>{{ record.next_pme_date|default:'' }}</td>
-                            <!-- Add this inside the table for each record -->
-                            <td><a href="#" class="delete-link" data-entry-id="{{ record.id }}">Delete</a></td>
-                            <form method="post" action="{% url 'delete_entry' record.id %}" data-entry-id="{{ record.id }}" style="display: none;">
-                                    {% csrf_token %}
-                            </form>
-                            <td><a href="{% url 'edit_entry' record.id %}">Edit</a></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-                     <!-- ... Your table and records ... -->
-
-                        <div class="pagination">
-                                <span class="step-links">
-                                    {% if records.has_previous %}
-                                        <a href="?page=1" class="page-link">&laquo; first</a>
-                                        <a href="?page={{ records.previous_page_number }}" class="page-link">previous</a>
-                                    {% endif %}
-
-                                    <span class="current-page">
-                                        Page {{ records.number }} of {{ records.paginator.num_pages }}.
-                                    </span>
-
-                                    {% if records.has_next %}
-                                        <a href="?page={{ records.next_page_number }}" class="page-link">next</a>
-                                        <a href="?page={{ records.paginator.num_pages }}" class="page-link">last &raquo;</a>
-                                    {% endif %}
-                                </span>
-                        </div>
-
-
+    <form method="get" action="{% url 'dashboard' %}">
+        <div class="search-box">
+            <input type="text" name="search" placeholder="Search...">
+            <button type="submit">Search</button>
         </div>
-    
-
+    </form>
+    <div class="action-buttons">
+        <form method="post" action="{% url 'export_entries' %}">
+            {% csrf_token %}
+            <button type="submit">Export to Excel</button>
+        </form>
+        <button type="button" class="danger-button" onclick="confirmFlushEntries()">Flush All Entries</button>
     </div>
+    <form method="post" action="{% url 'flush_entries' %}" id="flush-entries-form" style="display: none;">
+        {% csrf_token %}
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>Name</th>
+                <th>Employee Number</th>
+                <th>Designation</th>
+                <th>Last VT Date</th>
+                <th>Last PME Date</th>
+                <th>Date of Birth</th>
+                <th>Next VT Date</th>
+                <th>Next PME Date</th>
+                <th colspan="2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ record.name }}</td>
+                    <td>{{ record.employee_number }}</td>
+                    <td>{{ record.designation }}</td>
+                    <td>{{ record.last_vt_date }}</td>
+                    <td>{{ record.last_pme_date }}</td>
+                    <td>{{ record.date_of_birth }}</td>
+                    <td class="{% if record.next_vt_date and record.next_vt_date|date:'Ymd' >= today_plus_10_days %}yellow{% elif record.next_vt_date and record.next_vt_date|date:'Ymd' >= today_plus_7_days %}green{% elif record.next_vt_date and record.next_vt_date|date:'Ymd' < today %}red{% endif %}">
+                        {{ record.next_vt_date|default:'' }}
+                    </td>
+                    <td class="{% if record.next_pme_date and record.next_pme_date|date:'Ymd' >= today_plus_10_days %}yellow{% elif record.next_pme_date and record.next_pme_date|date:'Ymd' >= today_plus_7_days %}green{% elif record.next_pme_date and record.next_pme_date|date:'Ymd' < today %}red{% endif %}">
+                        {{ record.next_pme_date|default:'' }}
+                    </td>
+                    <td><a href="#" class="delete-link" data-entry-id="{{ record.id }}">Delete</a></td>
+                    <form method="post" action="{% url 'delete_entry' record.id %}" data-entry-id="{{ record.id }}" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <td><a href="{% url 'edit_entry' record.id %}">Edit</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination">
+        <span class="step-links">
+            {% if records.has_previous %}
+                <a href="?page=1" class="page-link">&laquo; first</a>
+                <a href="?page={{ records.previous_page_number }}" class="page-link">previous</a>
+            {% endif %}
+            <span class="current-page">
+                Page {{ records.number }} of {{ records.paginator.num_pages }}.
+            </span>
+            {% if records.has_next %}
+                <a href="?page={{ records.next_page_number }}" class="page-link">next</a>
+                <a href="?page={{ records.paginator.num_pages }}" class="page-link">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
 {% endblock %}

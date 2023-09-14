@@ -17,10 +17,10 @@
         <input type="text" name="designation" id="designation" value="{{ entry.designation }}" required>
 
         <label for="last_vt_date">Last VT Date:</label>
-        <input type="date" name="last_vt_date" id="last_vt_date" value="{{ entry.last_vt_date|date:'Y-m-d' }}" required>
+        <input type="date" name="last_vt_date" id="last_vt_date" value="{{ entry.last_vt_date|date:'Y-m-d' }}">
 
         <label for="last_pme_date">Last PME Date:</label>
-        <input type="date" name="last_pme_date" id="last_pme_date" value="{{ entry.last_pme_date|date:'Y-m-d' }}" required>
+        <input type="date" name="last_pme_date" id="last_pme_date" value="{{ entry.last_pme_date|date:'Y-m-d' }}">
 
         <label for="date_of_birth">Date of Birth:</label>
         <input type="date" name="date_of_birth" id="date_of_birth" value="{{ entry.date_of_birth|date:'Y-m-d' }}" required>

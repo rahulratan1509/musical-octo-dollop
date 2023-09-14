@@ -1,41 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Entry</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-</head>
-<body>
-    <div class="header">
-        <div class="user-info">
-            <p>Hello, {{ user.username }}</p>
-            <a href="{% url 'logout' %}">Logout</a>
-        </div>
-    </div>
+{% extends "EmployeeApp/base.html" %}
 
-    <div class="dashboard-container">
-        <div class="sidebar">
-            <h1>Dashboard</h1>
-            <ul class="dashboard-menu">
-                <li><a href="{% url 'dashboard' %}">Home</a></li>
-                <li><a href="{% url 'add_entry' %}">Add Entry</a></li>
-                <li><a href="{% url 'filter_entries' %}">Filter Entries</a></li> <!-- Added Filter Entries link -->
-                <!-- Add other dashboard links as needed -->
-            </ul>
-        </div>
+{% block title %}Import Entries{% endblock %}
 
-        <div class="main-content">
-                <h1>Import Entries</h1>
+{% block content %}
+    <h1>Import Entries</h1>
     
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    {{ form.as_p }}
-                    
-                    <button type="submit">Upload</button>
-                </form>
-    
-
-        </div>
-    </div>
-</body>
-</html>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+        
+        <button type="submit">Upload</button>
+    </form>
+{% endblock %}

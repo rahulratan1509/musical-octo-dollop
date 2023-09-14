@@ -18,6 +18,8 @@ def calculate_age(date_of_birth):
     age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
     return age
 
+from datetime import datetime, timedelta
+
 def calculate_next_dates(dob, last_pme_date, last_vt_date):
     current_year = datetime.now().year
     dob_year = dob.year
@@ -28,24 +30,30 @@ def calculate_next_dates(dob, last_pme_date, last_vt_date):
 
     if age < retirement_age:
         if last_vt_date:
-            next_vt_date = last_vt_date + timedelta(days=5 * 365)  # VT every 5 years
+            if age >= 59 and age <= 60:
+                next_vt_date = datetime(current_year, 6, 15).date()
+            else:
+                next_vt_date = last_vt_date + timedelta(days=5 * 365)  # VT every 5 years
         else:
-            next_vt_date = dob + timedelta(days=365)  # VT after 1 year
+            next_vt_date = None
 
-        if age <= 45 and last_pme_date:
-            next_pme_date = last_pme_date + timedelta(days=5 * 365)  # PME every 5 years
-        elif last_pme_date:
-            next_pme_date = last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
+        if last_pme_date:
+            if age <= 45:
+                next_pme_date = last_pme_date + timedelta(days=5 * 365)  # PME every 5 years
+            elif age > 45 and age < 59:
+                next_pme_date = last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
 
-        if age + 1 == 59 and current_year == 2023:
-            next_vt_date = datetime(2023, 6, 15).date()  # Set VT and PME dates for 2023 (adjust as needed)
-            next_pme_date = datetime(2023, 8, 25).date()
+            # Handle the case for ages 59-60
+            if age >= 59 and age <= 60:
+                next_pme_date = datetime(current_year, 8, 25).date()
 
-        if age == 59 and current_year == 2024:
-            next_vt_date = datetime(2024, 7, 10).date()  # Set VT and PME dates for 2024 (adjust as needed)
-            next_pme_date = datetime(2024, 9, 20).date()
-
+    # # Mark as "Retired" if the person is retired
+    # if age >= retirement_age:
+    #     next_vt_date = "Retired"
+    #     next_pme_date = "Retired"
+    
     return next_vt_date, next_pme_date
+
 
 # Views
 
@@ -260,3 +268,40 @@ def filter_entries(request):
         entries = None
 
     return render(request, 'EmployeeApp/filter_entries.html', {'entries': entries, 'start_date': start_date, 'end_date': end_date})
+
+# views.py
+from django.shortcuts import render
+from .models import Entry
+from datetime import date, timedelta
+
+def upcoming_vt_dates(request):
+    # Get entries with upcoming VT dates within the next 15 days
+    today = date.today()
+    upcoming_vt_entries = Entry.objects.filter(
+        next_vt_date__gte=today,
+        next_vt_date__lte=today + timedelta(days=15)
+    )
+    return render(request, 'EmployeeApp/upcoming_dates.html', {'entries': upcoming_vt_entries})
+
+def upcoming_pme_dates(request):
+    # Get entries with upcoming PME dates within the next 15 days
+    today = date.today()
+    upcoming_pme_entries = Entry.objects.filter(
+        next_pme_date__gte=today,
+        next_pme_date__lte=today + timedelta(days=15)
+    )
+    return render(request, 'EmployeeApp/upcoming_dates.html', {'entries': upcoming_pme_entries})
+
+def mark_as_done(request, entry_id, event_type):
+    try:
+        entry = Entry.objects.get(id=entry_id)
+        if event_type == 'vt':
+            entry.last_vt_date = entry.next_vt_date
+        elif event_type == 'pme':
+            entry.last_pme_date = entry.next_pme_date
+        entry.save()
+        messages.success(request, f'{entry.name} marked as done for {event_type.upper()}')
+    except Entry.DoesNotExist:
+        messages.error(request, 'Entry not found.')
+
+    return redirect('upcoming_dates')
