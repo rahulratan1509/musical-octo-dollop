@@ -269,39 +269,129 @@ def filter_entries(request):
 
     return render(request, 'EmployeeApp/filter_entries.html', {'entries': entries, 'start_date': start_date, 'end_date': end_date})
 
-# views.py
-from django.shortcuts import render
+# In your views.py
+
+from datetime import date, timedelta, datetime
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Entry
-from datetime import date, timedelta
 
+@login_required
 def upcoming_vt_dates(request):
-    # Get entries with upcoming VT dates within the next 15 days
     today = date.today()
-    upcoming_vt_entries = Entry.objects.filter(
-        next_vt_date__gte=today,
-        next_vt_date__lte=today + timedelta(days=15)
-    )
-    return render(request, 'EmployeeApp/upcoming_dates.html', {'entries': upcoming_vt_entries})
+    end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
 
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        if start_date and end_date:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+
+            # Filter entries where next VT date is within the selected date range
+            upcoming_vt_entries = Entry.objects.filter(
+                user=request.user,
+                next_vt_date__gte=start_date,
+                next_vt_date__lte=end_date
+            ).order_by('next_vt_date')
+        else:
+            # If no date range is selected, show all upcoming VT dates for the current month
+            upcoming_vt_entries = Entry.objects.filter(
+                user=request.user,
+                next_vt_date__gte=today,
+                next_vt_date__lte=end_of_month
+            ).order_by('next_vt_date')
+    else:
+        # Show all upcoming VT dates for the current month by default
+        upcoming_vt_entries = Entry.objects.filter(
+            user=request.user,
+            next_vt_date__gte=today,
+            next_vt_date__lte=end_of_month
+        ).order_by('next_vt_date')
+
+    context = {
+        'upcoming_vt_entries': upcoming_vt_entries,
+    }
+
+    return render(request, 'EmployeeApp/upcoming_vt_dates.html', context)
+
+@login_required
 def upcoming_pme_dates(request):
-    # Get entries with upcoming PME dates within the next 15 days
     today = date.today()
-    upcoming_pme_entries = Entry.objects.filter(
-        next_pme_date__gte=today,
-        next_pme_date__lte=today + timedelta(days=15)
-    )
-    return render(request, 'EmployeeApp/upcoming_dates.html', {'entries': upcoming_pme_entries})
+    end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
 
-def mark_as_done(request, entry_id, event_type):
-    try:
-        entry = Entry.objects.get(id=entry_id)
-        if event_type == 'vt':
-            entry.last_vt_date = entry.next_vt_date
-        elif event_type == 'pme':
-            entry.last_pme_date = entry.next_pme_date
-        entry.save()
-        messages.success(request, f'{entry.name} marked as done for {event_type.upper()}')
-    except Entry.DoesNotExist:
-        messages.error(request, 'Entry not found.')
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
 
-    return redirect('upcoming_dates')
+        if start_date and end_date:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+
+            # Filter entries where next PME date is within the selected date range
+            upcoming_pme_entries = Entry.objects.filter(
+                user=request.user,
+                next_pme_date__gte=start_date,
+                next_pme_date__lte=end_date
+            ).order_by('next_pme_date')
+        else:
+            # If no date range is selected, show all upcoming PME dates for the current month
+            upcoming_pme_entries = Entry.objects.filter(
+                user=request.user,
+                next_pme_date__gte=today,
+                next_pme_date__lte=end_of_month
+            ).order_by('next_pme_date')
+    else:
+        # Show all upcoming PME dates for the current month by default
+        upcoming_pme_entries = Entry.objects.filter(
+            user=request.user,
+            next_pme_date__gte=today,
+            next_pme_date__lte=end_of_month
+        ).order_by('next_pme_date')
+
+    context = {
+        'upcoming_pme_entries': upcoming_pme_entries,
+    }
+
+    return render(request, 'EmployeeApp/upcoming_pme_dates.html', context)
+
+# ...
+
+# Define a function to calculate the next VT date
+def calculate_next_vt_date(entry):
+    current_year = datetime.now().year
+    dob_year = entry.date_of_birth.year
+    age = current_year - dob_year
+    retirement_age = 60
+    next_vt_date = None
+
+    if age < retirement_age:
+        if entry.last_vt_date:
+            if age >= 59 and age <= 60:
+                next_vt_date = datetime(current_year, 6, 15).date()
+            else:
+                next_vt_date = entry.last_vt_date + timedelta(days=5 * 365)  # VT every 5 years
+
+    return next_vt_date
+
+# Define a function to calculate the next PME date
+def calculate_next_pme_date(entry):
+    current_year = datetime.now().year
+    dob_year = entry.date_of_birth.year
+    age = current_year - dob_year
+    retirement_age = 60
+    next_pme_date = None
+
+    if age < retirement_age:
+        if entry.last_pme_date:
+            if age <= 45:
+                next_pme_date = entry.last_pme_date + timedelta(days=5 * 365)  # PME every 5 years
+            elif age > 45 and age < 59:
+                next_pme_date = entry.last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
+
+            # Handle the case for ages 59-60
+            if age >= 59 and age <= 60:
+                next_pme_date = datetime(current_year, 8, 25).date()
+
+    return next_pme_date

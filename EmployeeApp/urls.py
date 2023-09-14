@@ -20,6 +20,10 @@ urlpatterns = [
     path('filter_entries/', views.filter_entries, name='filter_entries'),
 
 
+    path('upcoming_vt_dates/', views.upcoming_vt_dates, name='upcoming_vt_dates'),
+    path('upcoming_pme_dates/', views.upcoming_pme_dates, name='upcoming_pme_dates'),
+
+
 
 
     
