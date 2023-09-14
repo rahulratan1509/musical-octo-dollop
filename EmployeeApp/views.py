@@ -276,39 +276,35 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Entry
 
+from datetime import date, timedelta, datetime
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Entry
+
 @login_required
 def upcoming_vt_dates(request):
     today = date.today()
     end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
 
     if request.method == 'POST':
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
+        entry_id = request.POST.get('entry_id')
+        attended = request.POST.get('attended')
 
-        if start_date and end_date:
-            start_date = date.fromisoformat(start_date)
-            end_date = date.fromisoformat(end_date)
+        if entry_id and attended:
+            entry = Entry.objects.get(pk=entry_id)
+            entry.last_vt_date = today
+            entry.save()
 
-            # Filter entries where next VT date is within the selected date range
-            upcoming_vt_entries = Entry.objects.filter(
-                user=request.user,
-                next_vt_date__gte=start_date,
-                next_vt_date__lte=end_date
-            ).order_by('next_vt_date')
-        else:
-            # If no date range is selected, show all upcoming VT dates for the current month
-            upcoming_vt_entries = Entry.objects.filter(
-                user=request.user,
-                next_vt_date__gte=today,
-                next_vt_date__lte=end_of_month
-            ).order_by('next_vt_date')
-    else:
-        # Show all upcoming VT dates for the current month by default
-        upcoming_vt_entries = Entry.objects.filter(
-            user=request.user,
-            next_vt_date__gte=today,
-            next_vt_date__lte=end_of_month
-        ).order_by('next_vt_date')
+            # Calculate the new next VT date
+            entry.next_vt_date = calculate_next_vt_date(entry)
+            entry.save()
+
+    # Filter entries where next VT date is within the current month
+    upcoming_vt_entries = Entry.objects.filter(
+        user=request.user,
+        next_vt_date__gte=today,
+        next_vt_date__lte=end_of_month
+    ).order_by('next_vt_date')
 
     context = {
         'upcoming_vt_entries': upcoming_vt_entries,
@@ -322,39 +318,32 @@ def upcoming_pme_dates(request):
     end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
 
     if request.method == 'POST':
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
+        entry_id = request.POST.get('entry_id')
+        attended = request.POST.get('attended')
 
-        if start_date and end_date:
-            start_date = date.fromisoformat(start_date)
-            end_date = date.fromisoformat(end_date)
+        if entry_id and attended:
+            entry = Entry.objects.get(pk=entry_id)
+            entry.last_pme_date = today
+            entry.save()
 
-            # Filter entries where next PME date is within the selected date range
-            upcoming_pme_entries = Entry.objects.filter(
-                user=request.user,
-                next_pme_date__gte=start_date,
-                next_pme_date__lte=end_date
-            ).order_by('next_pme_date')
-        else:
-            # If no date range is selected, show all upcoming PME dates for the current month
-            upcoming_pme_entries = Entry.objects.filter(
-                user=request.user,
-                next_pme_date__gte=today,
-                next_pme_date__lte=end_of_month
-            ).order_by('next_pme_date')
-    else:
-        # Show all upcoming PME dates for the current month by default
-        upcoming_pme_entries = Entry.objects.filter(
-            user=request.user,
-            next_pme_date__gte=today,
-            next_pme_date__lte=end_of_month
-        ).order_by('next_pme_date')
+            # Calculate the new next PME date
+            entry.next_pme_date = calculate_next_pme_date(entry)
+            entry.save()
+
+    # Filter entries where next PME date is within the current month
+    upcoming_pme_entries = Entry.objects.filter(
+        user=request.user,
+        next_pme_date__gte=today,
+        next_pme_date__lte=end_of_month
+    ).order_by('next_pme_date')
 
     context = {
         'upcoming_pme_entries': upcoming_pme_entries,
     }
 
     return render(request, 'EmployeeApp/upcoming_pme_dates.html', context)
+
+# ...
 
 # ...
 
