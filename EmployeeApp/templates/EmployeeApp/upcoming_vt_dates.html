@@ -1,5 +1,5 @@
 {% extends "EmployeeApp/base.html" %}
-
+{% block title %}Upcoming VT Dates{% endblock %}
 {% block content %}
 <h1>Upcoming VT Dates</h1>
 
@@ -23,6 +23,7 @@
             <th>Name</th>
             <th>Employee Number</th>
             <th>Designation</th>
+            <!-- <th>Age</th> -->
             <th>Next VT Date</th>
             <th>Mark Attendance</th>
         </tr>
@@ -34,6 +35,7 @@
             <td>{{ entry.name }}</td>
             <td>{{ entry.employee_number }}</td>
             <td>{{ entry.designation }}</td>
+            <!-- <td>{{ entry.age }}</td> -->
             <td>{{ entry.next_vt_date }}</td>
             <td>
                 <!-- Form for marking attendance -->

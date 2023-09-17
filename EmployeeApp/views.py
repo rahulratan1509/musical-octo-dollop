@@ -11,14 +11,72 @@ from django.utils.dateparse import parse_date
 from .models import Area, Entry
 from .forms import EntryForm, ImportEntriesForm
 from django.contrib import messages
+# ...
+
+from dateutil import parser as date_parser  # Add this import statement
+from django.utils.timezone import make_aware
+from django.utils.timezone import make_aware
+from datetime import datetime, timedelta
+from django.shortcuts import redirect
+from datetime import datetime
+
+
+
+
+# ...
+
+@login_required
+def import_entries(request):
+    if request.method == 'POST':
+        form = ImportEntriesForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            if file.name.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file)
+
+                num_entries_created = 0
+
+                for _, row in df.iterrows():
+                    dob_str = row['Date of Birth']
+                    last_vt_date_str = row['Last VT Date']
+                    last_pme_date_str = row['Last PME Date']
+
+                    date_of_birth = None if pd.isna(dob_str) else date_parser.parse(str(dob_str)).date()
+                    last_vt_date = None if pd.isna(last_vt_date_str) else date_parser.parse(str(last_vt_date_str)).date()
+                    last_pme_date = None if pd.isna(last_pme_date_str) else date_parser.parse(str(last_pme_date_str)).date()
+
+                    next_vt_date, next_pme_date = calculate_next_dates(date_of_birth, last_pme_date, last_vt_date)
+
+                    Entry.objects.create(
+                        user=request.user,
+                        name=row['Name'],
+                        employee_number=row['Employee Number'],
+                        date_of_birth=date_of_birth,
+                        last_vt_date=last_vt_date,
+                        last_pme_date=last_pme_date,
+                        next_vt_date=next_vt_date,
+                        next_pme_date=next_pme_date,
+                        designation=row['Designation'],
+                    )
+
+                    num_entries_created += 1
+
+                return redirect('dashboard')
+            else:
+                form.add_error('file', 'Invalid file format. Please upload an Excel file.')
+    else:
+        form = ImportEntriesForm()
+
+    return render(request, 'EmployeeApp/import_entries.html', {'form': form})
+
+# ...
 
 # Utility Functions
+
 def calculate_age(date_of_birth):
     today = date.today()
     age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
     return age
-
-from datetime import datetime, timedelta
 
 def calculate_next_dates(dob, last_pme_date, last_vt_date):
     current_year = datetime.now().year
@@ -43,17 +101,10 @@ def calculate_next_dates(dob, last_pme_date, last_vt_date):
             elif age > 45 and age < 59:
                 next_pme_date = last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
 
-            # Handle the case for ages 59-60
             if age >= 59 and age <= 60:
                 next_pme_date = datetime(current_year, 8, 25).date()
-
-    # # Mark as "Retired" if the person is retired
-    # if age >= retirement_age:
-    #     next_vt_date = "Retired"
-    #     next_pme_date = "Retired"
     
     return next_vt_date, next_pme_date
-
 
 # Views
 
@@ -132,6 +183,13 @@ def dashboard(request):
     user = request.user
     records = Entry.objects.filter(user=user).order_by('name')
 
+    # Calculate today's date to be used for age calculation
+    today = date.today()
+
+    # Calculate the age for each record and add it as a new attribute
+    for record in records:
+        record.age = calculate_age(record.date_of_birth)
+
     search_query = request.GET.get('search')
     if search_query:
         records = records.filter(
@@ -139,6 +197,9 @@ def dashboard(request):
             Q(employee_number__icontains=search_query) |
             Q(designation__icontains=search_query)
         )
+
+        for record in records:
+            record.age = calculate_age(record.date_of_birth)
 
     paginator = Paginator(records, 10)
     page_number = request.GET.get('page')
@@ -155,6 +216,7 @@ def export_entries(request):
         'Employee Number': [entry.employee_number for entry in entries],
         'Designation': [entry.designation for entry in entries],
         'Last VT Date': [entry.last_vt_date.strftime('%Y-%m-%d') if entry.last_vt_date else '' for entry in entries],
+        'Age': [calculate_age(entry.date_of_birth) for entry in entries],  # Calculate age
         'Last PME Date': [entry.last_pme_date.strftime('%Y-%m-%d') if entry.last_pme_date else '' for entry in entries],
         'Next VT Date': [entry.next_vt_date.strftime('%Y-%m-%d') if entry.next_vt_date else '' for entry in entries],
         'Next PME Date': [entry.next_pme_date.strftime('%Y-%m-%d') if entry.next_pme_date else '' for entry in entries],
@@ -167,17 +229,11 @@ def export_entries(request):
     response['Content-Disposition'] = 'attachment; filename=employee_entries.xlsx'
 
     df.to_excel(response, index=False)
-
     return response
 
-from datetime import datetime
-import pandas as pd
 
-# ...
+from .models import Entry  # Import your Entry model
 
-from dateutil import parser as date_parser
-
-# ...
 @login_required
 def import_entries(request):
     if request.method == 'POST':
@@ -187,23 +243,20 @@ def import_entries(request):
             if file.name.endswith(('.xlsx', '.xls')):
                 df = pd.read_excel(file)
 
-                # Initialize the counter for entries created
-                num_entries_created = 0
+                entries_to_create = []  # Collect entries to be created
 
                 for _, row in df.iterrows():
                     dob_str = row['Date of Birth']
                     last_vt_date_str = row['Last VT Date']
                     last_pme_date_str = row['Last PME Date']
 
-                    # Parse dates using dateutil.parser.parse
                     date_of_birth = None if pd.isna(dob_str) else date_parser.parse(str(dob_str)).date()
                     last_vt_date = None if pd.isna(last_vt_date_str) else date_parser.parse(str(last_vt_date_str)).date()
                     last_pme_date = None if pd.isna(last_pme_date_str) else date_parser.parse(str(last_pme_date_str)).date()
 
                     next_vt_date, next_pme_date = calculate_next_dates(date_of_birth, last_pme_date, last_vt_date)
 
-                    # Create the entry
-                    Entry.objects.create(
+                    entry = Entry(
                         user=request.user,
                         name=row['Name'],
                         employee_number=row['Employee Number'],
@@ -214,11 +267,11 @@ def import_entries(request):
                         next_pme_date=next_pme_date,
                         designation=row['Designation'],
                     )
+                    
+                    entries_to_create.append(entry)  # Add the entry to the list
 
-                    # Increment the counter for entries created
-                    num_entries_created += 1
+                Entry.objects.bulk_create(entries_to_create)  # Bulk create entries
 
-                # Return the number of entries created in the JSON response
                 return redirect('dashboard')
             else:
                 form.add_error('file', 'Invalid file format. Please upload an Excel file.')
@@ -238,54 +291,71 @@ def delete_entry(request, entry_id):
 @login_required
 def flush_entries(request):
     user = request.user
-
-    # Delete all entries associated with the user
     Entry.objects.filter(user=user).delete()
-
-    # Optionally, you can add a success message
     messages.success(request, 'All entries have been deleted.')
-
     return redirect('dashboard')
 
 def filter_entries(request):
-    user = request.user  # Get the current user
+    user = request.user
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
 
     if start_date and end_date:
-        # Convert start_date and end_date to date objects
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
-        # Filter entries by the current user and date range
         entries = Entry.objects.filter(user=user, next_vt_date__range=(start_date, end_date))
 
-        # Calculate age for each entry
         for entry in entries:
             entry.age = calculate_age(entry.date_of_birth)
     else:
-        # If no date range is selected, set entries to None
         entries = None
 
     return render(request, 'EmployeeApp/filter_entries.html', {'entries': entries, 'start_date': start_date, 'end_date': end_date})
 
-# In your views.py
-
-from datetime import date, timedelta, datetime
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Entry
-
-from datetime import date, timedelta, datetime
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Entry
 
 @login_required
 def upcoming_vt_dates(request):
     today = date.today()
-    end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
+    end_of_month = today + timedelta(days=30)
 
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+
+    # Initialize with None, to be used in the template
+    selected_start_date = None
+    selected_end_date = None
+
+
+
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        if start_date <= end_date:
+            # If start_date is less than or equal to end_date, filter by the date range
+            upcoming_vt_entries = Entry.objects.filter(
+                user=request.user,
+                next_vt_date__gte=start_date,
+                next_vt_date__lte=end_date
+            ).order_by('next_vt_date')
+
+            # Store selected dates for use in the template
+            selected_start_date = start_date
+            selected_end_date = end_date
+        else:
+            # Handle invalid date range (start_date is greater than end_date)
+            messages.error(request, 'Invalid date range. Start date should be less than or equal to end date.')
+
+    else:
+        # If no date range is provided, show next 30 days entries by default
+        upcoming_vt_entries = Entry.objects.filter(
+            user=request.user,
+            next_vt_date__gte=today,
+            next_vt_date__lte=end_of_month
+        ).order_by('next_vt_date')
+
+    # Handle marking attendance
     if request.method == 'POST':
         entry_id = request.POST.get('entry_id')
         attended = request.POST.get('attended')
@@ -295,19 +365,16 @@ def upcoming_vt_dates(request):
             entry.last_vt_date = today
             entry.save()
 
-            # Calculate the new next VT date
             entry.next_vt_date = calculate_next_vt_date(entry)
             entry.save()
 
-    # Filter entries where next VT date is within the current month
-    upcoming_vt_entries = Entry.objects.filter(
-        user=request.user,
-        next_vt_date__gte=today,
-        next_vt_date__lte=end_of_month
-    ).order_by('next_vt_date')
+            # Redirect back to the same page with the selected date range
+            return redirect('upcoming_vt_dates')
 
     context = {
         'upcoming_vt_entries': upcoming_vt_entries,
+        'start_date': selected_start_date,  # Pass selected dates to the template
+        'end_date': selected_end_date,
     }
 
     return render(request, 'EmployeeApp/upcoming_vt_dates.html', context)
@@ -315,8 +382,45 @@ def upcoming_vt_dates(request):
 @login_required
 def upcoming_pme_dates(request):
     today = date.today()
-    end_of_month = today + timedelta(days=30)  # Assuming each month has 30 days
+    end_of_month = today + timedelta(days=30)
 
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+
+    # Initialize with None, to be used in the template
+    selected_start_date = None
+    selected_end_date = None
+
+
+
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        if start_date <= end_date:
+            # If start_date is less than or equal to end_date, filter by the date range
+            upcoming_pme_entries = Entry.objects.filter(
+                user=request.user,
+                next_pme_date__gte=start_date,
+                next_pme_date__lte=end_date
+            ).order_by('next_pme_date')
+
+            # Store selected dates for use in the template
+            selected_start_date = start_date
+            selected_end_date = end_date
+        else:
+            # Handle invalid date range (start_date is greater than end_date)
+            messages.error(request, 'Invalid date range. Start date should be less than or equal to end date.')
+
+    else:
+        # If no date range is provided, show next 30 days entries by default
+        upcoming_pme_entries = Entry.objects.filter(
+            user=request.user,
+            next_pme_date__gte=today,
+            next_pme_date__lte=end_of_month
+        ).order_by('next_pme_date')
+
+    # Handle marking attendance
     if request.method == 'POST':
         entry_id = request.POST.get('entry_id')
         attended = request.POST.get('attended')
@@ -326,28 +430,20 @@ def upcoming_pme_dates(request):
             entry.last_pme_date = today
             entry.save()
 
-            # Calculate the new next PME date
             entry.next_pme_date = calculate_next_pme_date(entry)
             entry.save()
 
-    # Filter entries where next PME date is within the current month
-    upcoming_pme_entries = Entry.objects.filter(
-        user=request.user,
-        next_pme_date__gte=today,
-        next_pme_date__lte=end_of_month
-    ).order_by('next_pme_date')
+            # Redirect back to the same page with the selected date range
+            return redirect('upcoming_pme_dates')
 
     context = {
         'upcoming_pme_entries': upcoming_pme_entries,
+        'start_date': selected_start_date,  # Pass selected dates to the template
+        'end_date': selected_end_date,
     }
 
     return render(request, 'EmployeeApp/upcoming_pme_dates.html', context)
 
-# ...
-
-# ...
-
-# Define a function to calculate the next VT date
 def calculate_next_vt_date(entry):
     current_year = datetime.now().year
     dob_year = entry.date_of_birth.year
@@ -360,11 +456,10 @@ def calculate_next_vt_date(entry):
             if age >= 59 and age <= 60:
                 next_vt_date = datetime(current_year, 6, 15).date()
             else:
-                next_vt_date = entry.last_vt_date + timedelta(days=5 * 365)  # VT every 5 years
+                next_vt_date = entry.last_vt_date + timedelta(days=5 * 365)
 
     return next_vt_date
 
-# Define a function to calculate the next PME date
 def calculate_next_pme_date(entry):
     current_year = datetime.now().year
     dob_year = entry.date_of_birth.year
@@ -375,11 +470,10 @@ def calculate_next_pme_date(entry):
     if age < retirement_age:
         if entry.last_pme_date:
             if age <= 45:
-                next_pme_date = entry.last_pme_date + timedelta(days=5 * 365)  # PME every 5 years
+                next_pme_date = entry.last_pme_date + timedelta(days=5 * 365)
             elif age > 45 and age < 59:
-                next_pme_date = entry.last_pme_date + timedelta(days=3 * 365)  # PME every 3 years
+                next_pme_date = entry.last_pme_date + timedelta(days=3 * 365)
 
-            # Handle the case for ages 59-60
             if age >= 59 and age <= 60:
                 next_pme_date = datetime(current_year, 8, 25).date()
 
