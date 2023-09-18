@@ -16,6 +16,8 @@ def main():
     url = "http://localhost:8000"  # Change the port if your app is running on a different port
 
     # Start the development server in a separate process
+    server_process = subprocess.Popen(["python", "manage.py", "makemigrations"])
+    server_process = subprocess.Popen(["python", "manage.py", "migrate"])
     server_process = subprocess.Popen(["python", "manage.py", "runserver"])
 
     # Wait for a moment to ensure the server has started
