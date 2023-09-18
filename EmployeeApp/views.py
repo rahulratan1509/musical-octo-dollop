@@ -201,11 +201,15 @@ def dashboard(request):
         for record in records:
             record.age = calculate_age(record.date_of_birth)
 
+    # Calculate the count of records for the current user
+    entry_count = records.count()
+
     paginator = Paginator(records, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'EmployeeApp/dashboard.html', {'user': user, 'records': page_obj})
+    return render(request, 'EmployeeApp/dashboard.html', {'user': user, 'records': page_obj, 'entry_count': entry_count})
+
 
 def export_entries(request):
     current_user = request.user
@@ -314,6 +318,12 @@ def filter_entries(request):
     return render(request, 'EmployeeApp/filter_entries.html', {'entries': entries, 'start_date': start_date, 'end_date': end_date})
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from datetime import date, timedelta, datetime
+from .models import Entry
+
 @login_required
 def upcoming_vt_dates(request):
     today = date.today()
@@ -326,7 +336,10 @@ def upcoming_vt_dates(request):
     selected_start_date = None
     selected_end_date = None
 
-
+    # Check if selected dates are in the session
+    if 'selected_start_date' in request.session and 'selected_end_date' in request.session:
+        selected_start_date = datetime.strptime(request.session['selected_start_date'], '%Y-%m-%d').date()
+        selected_end_date = datetime.strptime(request.session['selected_end_date'], '%Y-%m-%d').date()
 
     if start_date and end_date:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -340,19 +353,18 @@ def upcoming_vt_dates(request):
                 next_vt_date__lte=end_date
             ).order_by('next_vt_date')
 
-            # Store selected dates for use in the template
-            selected_start_date = start_date
-            selected_end_date = end_date
+            # Store selected dates in the session as strings
+            request.session['selected_start_date'] = start_date.strftime('%Y-%m-%d')
+            request.session['selected_end_date'] = end_date.strftime('%Y-%m-%d')
         else:
             # Handle invalid date range (start_date is greater than end_date)
             messages.error(request, 'Invalid date range. Start date should be less than or equal to end date.')
-
     else:
         # If no date range is provided, show next 30 days entries by default
         upcoming_vt_entries = Entry.objects.filter(
             user=request.user,
-            next_vt_date__gte=today,
-            next_vt_date__lte=end_of_month
+            next_vt_date__gte=selected_start_date or today,
+            next_vt_date__lte=selected_end_date or end_of_month
         ).order_by('next_vt_date')
 
     # Handle marking attendance
@@ -391,7 +403,10 @@ def upcoming_pme_dates(request):
     selected_start_date = None
     selected_end_date = None
 
-
+    # Check if selected dates are in the session
+    if 'selected_start_date' in request.session and 'selected_end_date' in request.session:
+        selected_start_date = datetime.strptime(request.session['selected_start_date'], '%Y-%m-%d').date()
+        selected_end_date = datetime.strptime(request.session['selected_end_date'], '%Y-%m-%d').date()
 
     if start_date and end_date:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -405,19 +420,18 @@ def upcoming_pme_dates(request):
                 next_pme_date__lte=end_date
             ).order_by('next_pme_date')
 
-            # Store selected dates for use in the template
-            selected_start_date = start_date
-            selected_end_date = end_date
+            # Store selected dates in the session as strings
+            request.session['selected_start_date'] = start_date.strftime('%Y-%m-%d')
+            request.session['selected_end_date'] = end_date.strftime('%Y-%m-%d')
         else:
             # Handle invalid date range (start_date is greater than end_date)
             messages.error(request, 'Invalid date range. Start date should be less than or equal to end date.')
-
     else:
         # If no date range is provided, show next 30 days entries by default
         upcoming_pme_entries = Entry.objects.filter(
             user=request.user,
-            next_pme_date__gte=today,
-            next_pme_date__lte=end_of_month
+            next_pme_date__gte=selected_start_date or today,
+            next_pme_date__lte=selected_end_date or end_of_month
         ).order_by('next_pme_date')
 
     # Handle marking attendance
@@ -478,3 +492,5 @@ def calculate_next_pme_date(entry):
                 next_pme_date = datetime(current_year, 8, 25).date()
 
     return next_pme_date
+
+

@@ -1,7 +1,9 @@
 {% extends "EmployeeApp/base.html" %}
 {% block title %}Upcoming VT Dates{% endblock %}
 {% block content %}
-<h1>Upcoming VT Dates</h1>
+<h1>Upcoming VT Dates</h1> 
+
+
 
 <form method="post">
     {% csrf_token %}
@@ -15,6 +17,13 @@
     </div>
     <button type="submit" class="btn btn-primary">Filter</button>
 </form>
+<span id="selected-date-range" style="font-weight: bold; color: black; margin-top: 10px;">
+    {% if start_date %}
+        Selected Date Range: {{ start_date }} to {{ end_date }}
+    {% endif %}
+</span>
+
+
 
 <table class="table">
     <!-- Table header goes here -->

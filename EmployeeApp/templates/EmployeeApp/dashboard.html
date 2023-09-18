@@ -38,6 +38,7 @@
     <!-- Your specific content for the "Dashboard" page goes here -->
     <!-- ... The content you provided for the "Dashboard" page ... -->
     <h1>Employee Records</h1>
+     <p>Total Records: {{ entry_count }}</p>
     <form method="get" action="{% url 'dashboard' %}">
         <div class="search-box">
             <input type="text" name="search" placeholder="Search...">

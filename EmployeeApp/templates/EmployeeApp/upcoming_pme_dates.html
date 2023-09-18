@@ -14,7 +14,17 @@
         <input type="date" id="end_date" name="end_date" value="{{ request.POST.end_date }}">
     </div>
     <button type="submit" class="btn btn-primary">Filter</button>
+
+
 </form>
+
+<span id="selected-date-range" style="font-weight: bold; color: black; margin-top: 10px;">
+    {% if start_date %}
+        Selected Date Range: {{ start_date }} to {{ end_date }}
+    {% endif %}
+</span>
+
+
 
 <table class="table">
     <!-- Table header goes here -->
