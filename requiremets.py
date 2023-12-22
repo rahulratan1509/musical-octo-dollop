@@ -5,6 +5,7 @@ import subprocess
 package_to_install = [
   "django",
   "openpyxl",
+  "pandas",
 ]
 
 #install each package using pip
