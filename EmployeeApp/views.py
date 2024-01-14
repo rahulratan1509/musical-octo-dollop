@@ -177,6 +177,7 @@ def registration(request):
             return redirect('dashboard')
     else:
         form = UserCreationForm()
+        print(form.errors)
     return render(request, 'EmployeeApp/registration.html', {'form': form})
 
 def dashboard(request):
